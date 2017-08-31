@@ -1,0 +1,371 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <title>OpenLayers Demo</title>
+    <style type="text/css">
+      html, body, #canvas {
+          width: 100%;
+          height: 100%;
+          margin: 0;
+          padding: 0;
+      }
+      #canvas .olControlAttribution {
+          font-size:13px;
+          bottom:3px;
+      }
+    </style>
+    <script type="text/javascript" src="http://www.openlayers.org/api/OpenLayers.js"></script>
+    <script type="text/javascript">
+        var map_canvas = null;
+        
+        //OSM地図の初期生成
+        function init() {
+            map_canvas         = new OpenLayers.Map("canvas");
+            var mapnik         = new OpenLayers.Layer.OSM();
+            var fromProjection = new OpenLayers.Projection("EPSG:4326");   // Transform from WGS 1984
+            var toProjection   = new OpenLayers.Projection("EPSG:900913"); // to Spherical Mercator Projection
+            var position       = new OpenLayers.LonLat(139.751523,35.658037).transform(fromProjection, toProjection);
+            var zoomLevel      = 16;
+            
+            map_canvas.addLayer(mapnik);
+            map_canvas.setCenter(position, zoomLevel);
+            
+            //以下Sample
+            setPolyline();
+            setPolygon();
+            setPolygonCircle();
+            setPois();
+            addMarkers();
+            //eventMoveEnd();
+            addMarkersIcon();
+        }
+        
+        //OSM地図の初期生成(地図の表示範囲を限定する)
+        function initBounds() {
+            var mapnik         = new OpenLayers.Layer.OSM();
+            var fromProjection = new OpenLayers.Projection("EPSG:4326");   // Transform from WGS 1984
+            var toProjection   = new OpenLayers.Projection("EPSG:900913"); // to Spherical Mercator Projection
+            var position       = new OpenLayers.LonLat(139.751523,35.658037).transform(fromProjection, toProjection);
+            var zoomLevel      = 16;
+		    var options = {
+		            controls:[
+		                new OpenLayers.Control.Navigation(),
+		                new OpenLayers.Control.Attribution()
+		            ],
+		            restrictedExtent: new OpenLayers.Bounds(139.740257, 35.638855, 139.772186, 35.670378).transform(new OpenLayers.Projection(fromProjection), new OpenLayers.Projection(toProjection))
+		        };
+		    map_canvas = new OpenLayers.Map("canvas", options);
+		    map_canvas.addLayer(mapnik);
+		    map_canvas.setCenter(position, zoomLevel);
+        }
+        
+        function addMarkers() {
+            var markers = new OpenLayers.Layer.Markers("Markers");
+            map_canvas.addLayer(markers);
+            
+            var fromProjection = new OpenLayers.Projection("EPSG:4326");   // Transform from WGS 1984
+            var toProjection   = new OpenLayers.Projection("EPSG:900913"); // to Spherical Mercator Projection
+            var position       = new OpenLayers.LonLat(139.751523,35.658037).transform(fromProjection, toProjection);
+            markers.addMarker(new OpenLayers.Marker(position));
+        }
+      
+        function myLocation(latLng, zoom) {
+            var myLocation = data.split(",");
+            var position = new OpenLayers.LonLat(myLocation[1], myLocation[0]).transform(fromProjection, toProjection);
+            if(zoom==-1) zoom = 17;
+            map_canvas.setCenter(position, zoom);
+        }
+        
+        function addMarkersIcon() {
+            var markers = new OpenLayers.Layer.Markers("Markers");
+            map_canvas.addLayer(markers);
+            
+            var size = new OpenLayers.Size(14, 34);
+            var offset = new OpenLayers.Pixel(-(size.w/2), -size.h);
+            var icon = new OpenLayers.Icon('icon_red.png', size, offset); //http://www.openlayers.org/dev/img/marker.png
+            
+            var fromProjection = new OpenLayers.Projection("EPSG:4326");   // Transform from WGS 1984
+            var toProjection   = new OpenLayers.Projection("EPSG:900913"); // to Spherical Mercator Projection
+            //var position1       = new OpenLayers.LonLat(139.750981, 35.657814).transform(fromProjection, toProjection);
+            //markers.addMarker(new OpenLayers.Marker(position1), icon);
+            
+            var marker1 = new OpenLayers.Marker(new OpenLayers.LonLat(139.750981, 35.657814).transform(new OpenLayers.Projection(fromProjection), new OpenLayers.Projection(toProjection)), icon);
+            marker1.events.register('touchstart', marker1, function(evt) {
+                alert('Ok');
+                OpenLayers.Event.stop(evt);
+            });
+            markers.addMarker(marker1);
+            
+            var newIcon = icon.clone(); //複数のまーかに同じアイコンを仕様する場合、アイコンおぷじぇくとを複製し使用する事
+            var marker2 = new OpenLayers.Marker(new OpenLayers.LonLat(139.751914, 35.657757).transform(new OpenLayers.Projection(fromProjection), new OpenLayers.Projection(toProjection)), newIcon);
+            marker2.events.register('touchstart', marker2, function(evt) {
+                //Move
+	            var fromProjection = new OpenLayers.Projection("EPSG:4326");   // Transform from WGS 1984
+	            var toProjection   = new OpenLayers.Projection("EPSG:900913"); // to Spherical Mercator Projection
+	            var position       = new OpenLayers.LonLat(139.75465,35.656742).transform(fromProjection, toProjection);
+                //map_canvas.setCenter(position, map_canvas.getZoom())
+                map_canvas.panTo(position);
+                OpenLayers.Event.stop(evt);
+            });
+            markers.addMarker(marker2);
+            
+            //STARTアイコン
+            var size2 = new OpenLayers.Size(47, 65);
+            var offset2 = new OpenLayers.Pixel(-(size2.w/2), -size2.h);
+            var iconStart = new OpenLayers.Icon('route_start.png', size2, offset2);
+            var marker3 = new OpenLayers.Marker(new OpenLayers.LonLat(139.748529, 35.659026).transform(new OpenLayers.Projection(fromProjection),
+                                                new OpenLayers.Projection(toProjection)),
+                                                iconStart);
+            markers.addMarker(marker3);
+            
+            //ENDアイコン
+            var iconEnd = new OpenLayers.Icon('route_end.png', size2, offset2);
+            var marker4 = new OpenLayers.Marker(new OpenLayers.LonLat(139.748293, 35.657431).transform(new OpenLayers.Projection(fromProjection),
+                                                new OpenLayers.Projection(toProjection)),
+                                                iconEnd);
+            markers.addMarker(marker4);
+        }
+        
+        //地図上にテキスト（POI:Points of interest）を配置
+        //要素間は全てタブを挿入してください。またテキストノードを追加する場合は新たに行を追加してください。最後の行の終端には改行を入れてください。
+        function setPois() {
+            var pois = new OpenLayers.Layer.Text("My Points",
+                {
+                    location:"sample.txt"
+                }
+            );
+            map_canvas.addLayer(pois);
+            //**現在Android端末側では説明が出ていない(想定動作：http://openstreetmap.piyolab.net/textonmap.php)
+        }
+        
+        
+        function setPolygon() {
+        	var fromProjection = new OpenLayers.Projection("EPSG:4326");   // Transform from WGS 1984
+        	
+            var layer_style = OpenLayers.Util.extend({}, OpenLayers.Feature.Vector.style['default']);
+            layer_style.fillOpacity = 0.2;
+            layer_style.graphicOpacity = 1;
+            
+            var style_blue = OpenLayers.Util.extend({}, layer_style);
+            style_blue.strokeColor = "green";
+            style_blue.strokeOpacity = 1;
+            style_blue.strokeWidth = 3;
+            style_blue.pointRadius = 6;
+            style_blue.fillColor = "green";
+        	
+			var lineLayer = new OpenLayers.Layer.Vector("Line Layer");
+            
+			var points = new Array();
+			
+			points[0] =new OpenLayers.LonLat(139.752772, 35.660473).transform(new OpenLayers.Projection(fromProjection), map_canvas.getProjectionObject());
+			points[0] = new OpenLayers.Geometry.Point(points[0].lon,points[0].lat);
+
+			points[1] = new OpenLayers.LonLat(139.754167, 35.66026).transform(new OpenLayers.Projection(fromProjection), map_canvas.getProjectionObject());
+			points[1] = new OpenLayers.Geometry.Point(points[1].lon,points[1].lat);
+
+			points[2] = new OpenLayers.LonLat(139.753942, 35.658957).transform(new OpenLayers.Projection(fromProjection), map_canvas.getProjectionObject());
+			points[2] = new OpenLayers.Geometry.Point(points[2].lon,points[2].lat);
+
+			points[3] = new OpenLayers.LonLat(139.75252, 35.659105).transform(new OpenLayers.Projection(fromProjection), map_canvas.getProjectionObject());
+			points[3] = new OpenLayers.Geometry.Point(points[3].lon,points[3].lat);
+
+			var linear_ring = new OpenLayers.Geometry.LinearRing(points);
+			polygonFeature = new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Polygon([linear_ring]), null, style_blue);
+			lineLayer.addFeatures([polygonFeature]);
+
+			map_canvas.addLayer(lineLayer);
+        }
+        
+        function setPolygonCircle() {
+            var lonLat = new OpenLayers.LonLat(139.75251,35.655918).transform(epsg4326, projectTo);
+            var vectorLayer = new OpenLayers.Layer.Vector("Vector Layer");
+            var point = new OpenLayers.Geometry.Point(lonLat.lon, lonLat.lat);
+            
+			var sunpoly = OpenLayers.Geometry.Polygon.createRegularPolygon (
+			    point,
+			    800,
+			    36,
+			    0
+			);
+			var sun
+        }
+        
+        function setPolyline() {
+        	var fromProjection = new OpenLayers.Projection("EPSG:4326");   // Transform from WGS 1984
+            var style_red = {
+                strokeColor: "#CC0000",
+                strokeOpacity: 0.5,
+                strokeWidth: 3,
+                pointRadius: 6,
+                pointrEvents: "visiblePainted"
+            };
+            
+			// create a point feature
+            var point = new OpenLayers.LonLat(139.748529, 35.659026).transform(new OpenLayers.Projection(fromProjection), map_canvas.getProjectionObject());
+            point = new OpenLayers.Geometry.Point(point.lon, point.lat);
+			
+            var point2 = new OpenLayers.LonLat(139.75031, 35.65883).transform(new OpenLayers.Projection(fromProjection), map_canvas.getProjectionObject());
+            point2 = new OpenLayers.Geometry.Point(point2.lon, point2.lat);
+			
+            var point3 = new OpenLayers.LonLat(139.75024, 35.657915).transform(new OpenLayers.Projection(fromProjection), map_canvas.getProjectionObject());
+            point3 = new OpenLayers.Geometry.Point(point3.lon, point3.lat);
+			
+            var point4 = new OpenLayers.LonLat(139.748293, 35.657431).transform(new OpenLayers.Projection(fromProjection), map_canvas.getProjectionObject());
+            point4 = new OpenLayers.Geometry.Point(point4.lon, point4.lat);
+			
+			// ここから
+			// create a line feature from a list of points 点の設定
+			var pointList = [];
+			pointList.push(point);
+			pointList.push(point2);
+			pointList.push(point3);
+			pointList.push(point4);
+			
+            var lineFeature = new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(pointList), null, style_red);
+            var vectorLayer = new OpenLayers.Layer.Vector("Simple Geometry");
+            vectorLayer.addFeatures(lineFeature);
+            map_canvas.addLayer(vectorLayer);
+            
+            
+        	/*
+			var fromProjection = new OpenLayers.Projection("EPSG:4326");   // Transform from WGS 1984
+            var style_green = {
+                strokeColor: "#339933",
+                strokeOpacity: 1,
+                strokeWidth: 3,
+                pointRadius: 6,
+                pointrEvents: "visiblePainted"
+            };
+            
+            var point = new OpenLayers.LonLat(139.750037, 35.657549).transform(new OpenLayers.Projection(fromProjection), map_canvas.getProjectionObject());
+            point = new OpenLayers.Geometry.Point(point.lon, point.lat);
+            
+            var pointList = [];
+            var newPoint = point;
+            for(var p=0; p<5; ++p) {
+                newPoint = new OpenLayers.Geometry.Point(newPoint.x + Math.random(1), newPoint.y + Math.random(1));
+                pointList.push(newPoint);
+            }
+            var lineFeature = new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(pointList), null, style_green);
+            vectorLayer = new OpenLayers.Layer.Vector("Simple Geometry");
+            vectorLayer.addFeatures(lineFeature);
+            map_canvas.addLayer(vectorLayer);
+            */
+            
+        /*
+            //var polyline=khtml.maplib.geometry.Feature({type:"LineString",coordinates:[[139.750257,35.657614],[139.751201,35.657117],[139.752504,35.657635],[139.753277,35.658642]]}); //somewhere near vienna
+            //polyline.className="park"; //css styling
+            //map_canvas.featureCollection.appendChild(polyline);
+            
+			// create a point feature
+			var point = new OpenLayers.Geometry.Point(-28000, -76000);
+			var pointFeature = new OpenLayers.Feature.Vector(point,null,style_blue);
+			var point2 = new OpenLayers.Geometry.Point(-27000, -76000);
+			var pointFeature2 = new OpenLayers.Feature.Vector(point2,null,style_green);
+			
+			// ここから
+			// create a line feature from a list of points 点の設定
+			var pointList = [];
+			newPoint = new OpenLayers.Geometry.Point(-25000,0);
+			pointList.push(newPoint);
+			newPoint = new OpenLayers.Geometry.Point(-26000,0);
+			pointList.push(newPoint);
+			newPoint = new OpenLayers.Geometry.Point(-27000,-0);
+			pointList.push(newPoint);
+			
+			var lineFeature = new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(pointList),null,style_green);
+			// ここまで
+			
+			map_canvas.addLayer(map_canvas);
+			map_canvas.addFeatures([pointFeature, pointFeature2, lineFeature]);
+        */
+            
+            /*
+            var style_green = {
+                strokeColor: "#339933",
+                strokeOpacity: 1,
+                strokeWidth: 3,
+                pointRadius: 6,
+                pointrEvents: "visiblePainted"
+            };
+            
+            var gridProjection = new OpenSpace.GridProjection();
+            var lonLat = new OpenLayers.LonLat(139.750997, 35.658107);
+            var mapPoint = gridProjection.getMapPointFromLonLat(lonLat);
+            var point = new OpenLayers.Geometry.Point(139.750997, 35.658107);
+            
+            var pointList = [];
+            var newPoint = point;
+            for(var p=0; p<5; ++p) {
+                newPoint = new OpenLayers.Geometry.Point(newPoint.x + Math.random(1), newPoint.y + Math.random(1));
+                pointList.push(newPoint);
+            }
+            lineFeature = new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(pointList), null, style_green);
+            vectorLayer = new OpenLayers.Layer.Vector("Simple Geometry");
+            vectorLayer.addFeatures(lineFeature);
+            map_canvas.addLayer(vectorLayer);
+            */
+        }
+        
+        /*
+		map.events.register(type, obj, listener);
+		type:イベントのタイプです。どのようなイベントがあるかは後で記載します。
+		obj:リスナーを実行するオブジェクトの参照です。ここで指定したオブジェクトは、リスナー関数内で'this'でアクセスできます。
+		listener:リスナー関数です。この関数内に、イベント発生時の処理を記述します。
+		
+		preaddlayer 	レイヤーを追加する直前に発生します。
+		addlayer 	レイヤーを追加した直後に発生します。
+		preremovelayer 	レイヤーを削除する直前に発生します。
+		removelayer 	レイヤーを削除した直後に発生します。
+		changelayer 	レイヤーの属性を変更した直後に発生します。
+		movestart 	ドラッグ、パン、ズームを開始した直後に発生します。
+		move 	ドラッグ、パン、ズームの直後に発生します。
+		moveend 	ドラッグ、パン、ズームが完了した直後に発生します。
+		zoomend 	ズーム操作が完了した直後に発生します。
+		mouseover 	地図上にマウスが乗った直後に発生します。
+		mouseout 	地図上からマウスが外れた直後に発生します。
+		mousemove 	地図上でマウスが移動した直後に発生します。
+		changebaselayer 	ベースレイヤーが変更された直後に発生します。
+        */
+        function eventMoveEnd() {
+            map_canvas.events.register("moveend", map_canvas, function() {
+                getParam();
+            });
+        }
+        
+        /*
+		getCenter:地図の中心座標を取得する。戻り値はOpenLayers.Lonlatオブジェクト。
+		getZoom  :地図のズームレベルを取得する。戻り値はIntegerオブジェクト。
+		getExtent:地図が表示している領域を取得する。戻り値はOpenLayers.Boundsオブジェクト。
+		getScale :地図のスケールを取得する。戻り値はFloatオブジェクト。 
+        */
+        function getParam() {
+            var fromProjection = new OpenLayers.Projection("EPSG:4326");   // Transform from WGS 1984
+            var toProjection   = new OpenLayers.Projection("EPSG:900913"); // to Spherical Mercator Projection
+            
+            var lonLat = map_canvas.getCenter().transform(new OpenLayers.Projection(toProjection)
+                                                         ,new OpenLayers.Projection(fromProjection));
+            var extent = map_canvas.getExtent().transform(new OpenLayers.Projection(toProjection)
+                                                         ,new OpenLayers.Projection(fromProjection));
+            var zoomLavel = map_canvas.getZoom();
+            var scale = map_canvas.getScale();
+            var lat = lonLat.lat;
+            var lon = lonLat.lon;
+            var left = extent.left;
+            var right = extent.right;
+            var top = extent.top;
+            var bottom = extent.bottom;
+            var width = extent.getWidth();
+            var height = extent.getHeight();
+            
+            alert(zoomLavel+","+scale+","+lat+","+lon+","+left+","+right+","+top+","+bottom+","+width+","+height);
+            //AndroidOS3.0以上から、Java側でキャッチ対応
+            //document.location = zoomLavel+","+scale+","+lat+","+lon+","+left+","+right+","+top+","+bottom+","+width+","+height;
+        }
+    </script>
+  </head>
+  <body onload="init();">
+    <div id="canvas"></div>
+  </body>
+</html>

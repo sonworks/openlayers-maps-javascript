@@ -1,0 +1,3 @@
+lat	lon	title	description	icon	iconSize	iconOffset
+35.657012	139.750873	ここはタイトル1	ここは説明1	icon_blue.png	14,34	-7,-34
+35.657274	139.752504	ここはタイトル2	ここは説明2	icon_blue.png	14,34	-7,-34
